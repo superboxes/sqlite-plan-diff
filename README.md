@@ -120,6 +120,12 @@ pnpm typecheck
 pnpm build
 ```
 
+## TODO
+
+- Add parser fixtures from multiple SQLite versions to harden normalization.
+- Add optional `--format markdown` output for easy PR comments.
+- Add a small benchmark script to pair semantic diffs with measured query timings.
+
 ## Project Layout
 
 - `src/cli.ts`
