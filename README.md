@@ -1,5 +1,9 @@
 # sqlite-plan-diff
 
+[![CI](https://github.com/superboxes/sqlite-plan-diff/actions/workflows/ci.yml/badge.svg)](https://github.com/superboxes/sqlite-plan-diff/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/sqlite-plan-diff.svg)](https://www.npmjs.com/package/sqlite-plan-diff)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 `sqlite-plan-diff` is a small TypeScript CLI for comparing SQLite query plans semantically, not just with plain text diffing.
 
 It runs `EXPLAIN QUERY PLAN`, normalizes plan nodes, and reports meaningful changes such as:
@@ -11,6 +15,20 @@ It runs `EXPLAIN QUERY PLAN`, normalizes plan nodes, and reports meaningful chan
 - major subtree/join shape changes
 
 ## Install
+
+### From npm (recommended)
+
+```bash
+npx sqlite-plan-diff --help
+```
+
+Or install globally:
+
+```bash
+npm install -g sqlite-plan-diff
+```
+
+### From source
 
 ```bash
 pnpm install
@@ -104,6 +122,30 @@ All commands support `--json`. Output includes:
 - raw EQP rows
 - normalized plan (`op`, `table`, `index`, `covering`, `whereTerms`, `tempReason`, `children`)
 - semantic diff changes for `diff` and `whatif`
+
+## Use in CI
+
+Example GitHub Actions step that runs a plan diff check:
+
+```yaml
+name: Query Plan Check
+
+on: [pull_request]
+
+jobs:
+  plan-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: node dist/cli.js diff test/fixtures/app.db --before "select * from users where name = 'Alice'" --after "select * from users where email = 'alice@example.com'"
+```
 
 ## Limitations
 
