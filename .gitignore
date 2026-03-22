@@ -5,3 +5,5 @@ coverage
 *.log
 .pnpm-store
 pnpm-debug.log*
+demo.cast
+*.tgz

@@ -30,6 +30,9 @@
   "bugs": {
     "url": "https://github.com/superboxes/sqlite-plan-diff/issues"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=22"
   },
@@ -37,6 +40,7 @@
     "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "tsx src/cli.ts",
+    "pack:check": "npm_config_cache=/tmp/sqlite-plan-diff-npm-cache npm pack --dry-run",
     "prepack": "pnpm build",
     "test": "vitest run",
     "test:watch": "vitest"

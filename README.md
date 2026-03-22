@@ -14,6 +14,8 @@ It runs `EXPLAIN QUERY PLAN`, normalizes plan nodes, and reports meaningful chan
 - temporary b-tree introduced/removed
 - major subtree/join shape changes
 
+[![asciicast](https://asciinema.org/a/exRN1fLg4pFPSPsL.svg)](https://asciinema.org/a/exRN1fLg4pFPSPsL)
+
 ## Install
 
 ### From npm (recommended)
