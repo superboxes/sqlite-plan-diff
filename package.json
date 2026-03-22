@@ -2,10 +2,33 @@
   "name": "sqlite-plan-diff",
   "version": "0.1.1",
   "description": "Compare SQLite query plans before and after query or index changes.",
+  "keywords": [
+    "sqlite",
+    "query-plan",
+    "explain-query-plan",
+    "database",
+    "cli",
+    "performance"
+  ],
   "license": "MIT",
   "type": "commonjs",
+  "main": "./dist/cli.js",
+  "types": "./dist/cli.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
     "sqlite-plan-diff": "dist/cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/superboxes/sqlite-plan-diff.git"
+  },
+  "homepage": "https://github.com/superboxes/sqlite-plan-diff#readme",
+  "bugs": {
+    "url": "https://github.com/superboxes/sqlite-plan-diff/issues"
   },
   "engines": {
     "node": ">=22"
@@ -14,6 +37,7 @@
     "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "tsx src/cli.ts",
+    "prepack": "pnpm build",
     "test": "vitest run",
     "test:watch": "vitest"
   },
