@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/superboxes/sqlite-plan-diff/actions/workflows/ci.yml/badge.svg)](https://github.com/superboxes/sqlite-plan-diff/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/sqlite-plan-diff.svg)](https://www.npmjs.com/package/sqlite-plan-diff)
+[![npm downloads last week](https://img.shields.io/npm/dw/sqlite-plan-diff.svg)](https://www.npmjs.com/package/sqlite-plan-diff)
+[![npm downloads last month](https://img.shields.io/npm/dm/sqlite-plan-diff.svg)](https://www.npmjs.com/package/sqlite-plan-diff)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 `sqlite-plan-diff` is a small TypeScript CLI for comparing SQLite query plans semantically, not just with plain text diffing.
@@ -75,6 +77,13 @@ sqlite-plan-diff diff app.db \
   --json
 ```
 
+```bash
+sqlite-plan-diff diff app.db \
+  --before "select * from users where name = 'Alice'" \
+  --after "select * from users where email = 'alice@example.com'" \
+  --format markdown
+```
+
 ### `whatif`
 
 ```bash
@@ -117,13 +126,20 @@ After Plan
 SEARCH | table=orders | index=idx_orders_customer_created | where=customer_id=?
 ```
 
-## JSON Output
+## Output Formats
 
-All commands support `--json`. Output includes:
+All commands support terminal output by default, plus:
+
+- `--json`
+- `--format markdown`
+
+`--json` output includes:
 
 - raw EQP rows
 - normalized plan (`op`, `table`, `index`, `covering`, `whereTerms`, `tempReason`, `children`)
 - semantic diff changes for `diff` and `whatif`
+
+`--format markdown` is intended for PR comments and CI summaries.
 
 ## Use in CI
 
@@ -167,7 +183,6 @@ pnpm build
 ## TODO
 
 - Add parser fixtures from multiple SQLite versions to harden normalization.
-- Add optional `--format markdown` output for easy PR comments.
 - Add a small benchmark script to pair semantic diffs with measured query timings.
 
 ## Project Layout
@@ -181,6 +196,7 @@ pnpm build
 - `src/parser/normalizePlan.ts`
 - `src/diff/semanticDiff.ts`
 - `src/diff/renderTerminal.ts`
+- `src/diff/renderMarkdown.ts`
 - `src/diff/renderJson.ts`
 - `src/sandbox/cloneDb.ts`
 - `test/`

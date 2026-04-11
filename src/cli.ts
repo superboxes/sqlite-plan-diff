@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { Command, CommanderError } from "commander";
 import { runDiffCommand } from "./commands/diff";
 import { runExplainCommand } from "./commands/explain";
@@ -10,13 +12,23 @@ function collectValues(value: string, previous: string[]): string[] {
   return [...previous, value];
 }
 
+function readVersion(): string {
+  try {
+    const packageJsonPath = resolve(__dirname, "..", "package.json");
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version?: string };
+    return packageJson.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
 function createProgram(io: CommandIO, setExitCode: (code: number) => void): Command {
   const program = new Command();
 
   program
     .name("sqlite-plan-diff")
     .description("Compare SQLite EXPLAIN QUERY PLAN output semantically.")
-    .version("0.1.0")
+    .version(readVersion())
     .showHelpAfterError()
     .configureOutput({
       writeOut: (message) => io.out(message),
@@ -27,14 +39,21 @@ function createProgram(io: CommandIO, setExitCode: (code: number) => void): Comm
     .command("explain <dbPath> <query>")
     .description("Run EXPLAIN QUERY PLAN and print raw plus normalized output.")
     .option("-p, --param <value>", "Bind positional parameter (repeatable)", collectValues, [])
-    .option("--json", "Print JSON output")
-    .action((dbPath: string, query: string, options: { param: string[]; json?: boolean }) => {
+    .option("--format <format>", "Output format: terminal, markdown, json")
+    .option("--json", "Alias for --format json")
+    .action(
+      (
+        dbPath: string,
+        query: string,
+        options: { param: string[]; json?: boolean; format?: string }
+      ) => {
       const code = runExplainCommand(
-        { dbPath, query, params: options.param, json: options.json },
+        { dbPath, query, params: options.param, json: options.json, format: options.format },
         io
       );
       setExitCode(code);
-    });
+      }
+    );
 
   program
     .command("diff <dbPath>")
@@ -43,7 +62,8 @@ function createProgram(io: CommandIO, setExitCode: (code: number) => void): Comm
     .requiredOption("--after <query>", "Query for candidate plan")
     .option("--before-param <value>", "Bind positional parameter for --before (repeatable)", collectValues, [])
     .option("--after-param <value>", "Bind positional parameter for --after (repeatable)", collectValues, [])
-    .option("--json", "Print JSON output")
+    .option("--format <format>", "Output format: terminal, markdown, json")
+    .option("--json", "Alias for --format json")
     .action(
       (
         dbPath: string,
@@ -53,6 +73,7 @@ function createProgram(io: CommandIO, setExitCode: (code: number) => void): Comm
           beforeParam: string[];
           afterParam: string[];
           json?: boolean;
+          format?: string;
         }
       ) => {
         const code = runDiffCommand(
@@ -62,7 +83,8 @@ function createProgram(io: CommandIO, setExitCode: (code: number) => void): Comm
             afterQuery: options.after,
             beforeParams: options.beforeParam,
             afterParams: options.afterParam,
-            json: options.json
+            json: options.json,
+            format: options.format
           },
           io
         );
@@ -76,11 +98,12 @@ function createProgram(io: CommandIO, setExitCode: (code: number) => void): Comm
     .requiredOption("--query <query>", "Query to analyze")
     .requiredOption("--index <ddl>", "Hypothetical CREATE INDEX statement")
     .option("-p, --param <value>", "Bind positional parameter for --query (repeatable)", collectValues, [])
-    .option("--json", "Print JSON output")
+    .option("--format <format>", "Output format: terminal, markdown, json")
+    .option("--json", "Alias for --format json")
     .action(
       async (
         dbPath: string,
-        options: { query: string; index: string; param: string[]; json?: boolean }
+        options: { query: string; index: string; param: string[]; json?: boolean; format?: string }
       ) => {
         const code = await runWhatIfCommand(
           {
@@ -88,7 +111,8 @@ function createProgram(io: CommandIO, setExitCode: (code: number) => void): Comm
             query: options.query,
             indexDdl: options.index,
             params: options.param,
-            json: options.json
+            json: options.json,
+            format: options.format
           },
           io
         );
@@ -114,7 +138,7 @@ export async function runCli(argv: string[], io: CommandIO = defaultCommandIO): 
     return exitCode;
   } catch (error) {
     if (error instanceof CommanderError) {
-      return error.exitCode || 1;
+      return error.exitCode ?? 1;
     }
 
     io.err(`Fatal error: ${formatError(error)}\n`);

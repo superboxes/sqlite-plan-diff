@@ -1,4 +1,5 @@
 import { renderJson } from "../diff/renderJson";
+import { renderComparisonMarkdown } from "../diff/renderMarkdown";
 import { renderNormalizedPlan, renderSemanticDiff } from "../diff/renderTerminal";
 import { semanticDiff } from "../diff/semanticDiff";
 import { normalizePlan } from "../parser/normalizePlan";
@@ -6,7 +7,7 @@ import { runExplainQueryPlan } from "../sqlite/eqp";
 import { connectSqlite } from "../sqlite/connect";
 import { cloneDbToTemp } from "../sandbox/cloneDb";
 import type { PlanWithRaw, SemanticDiffResult } from "../types";
-import { formatError, writeLine } from "./shared";
+import { formatError, resolveOutputFormat, writeLine } from "./shared";
 import type { CommandIO } from "./shared";
 
 export interface WhatIfInput {
@@ -54,13 +55,20 @@ export async function executeWhatIf(input: WhatIfInput): Promise<WhatIfOutput> {
 
 export interface WhatIfCommandInput extends WhatIfInput {
   json?: boolean;
+  format?: string;
 }
 
 export async function runWhatIfCommand(input: WhatIfCommandInput, io: CommandIO): Promise<number> {
   try {
     const output = await executeWhatIf(input);
-    if (input.json) {
+    const format = resolveOutputFormat(input);
+    if (format === "json") {
       writeLine(io.out, renderJson(output));
+      return 0;
+    }
+
+    if (format === "markdown") {
+      writeLine(io.out, renderComparisonMarkdown(output));
       return 0;
     }
 

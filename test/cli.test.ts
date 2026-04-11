@@ -26,6 +26,37 @@ function createBufferedIO(): {
 const fixtureDb = resolve("test/fixtures/app.db");
 
 describe("CLI", () => {
+  it("supports --version with a zero exit code", async () => {
+    const buffered = createBufferedIO();
+    const code = await runCli(["node", "sqlite-plan-diff", "--version"], buffered.io);
+
+    expect(code).toBe(0);
+    expect(buffered.getErr()).toBe("");
+    expect(buffered.getOut().trim()).toBe("0.1.2");
+  });
+
+  it("supports explain with --format markdown", async () => {
+    const buffered = createBufferedIO();
+    const code = await runCli(
+      [
+        "node",
+        "sqlite-plan-diff",
+        "explain",
+        fixtureDb,
+        "select * from users where email = ?",
+        "--format",
+        "markdown"
+      ],
+      buffered.io
+    );
+
+    expect(code).toBe(0);
+    expect(buffered.getErr()).toBe("");
+    expect(buffered.getOut()).toContain("## Raw EQP Rows");
+    expect(buffered.getOut()).toContain("## Normalized Summary");
+    expect(buffered.getOut()).toContain("```text");
+  });
+
   it("supports explain with --json", async () => {
     const buffered = createBufferedIO();
     const code = await runCli(
@@ -71,6 +102,56 @@ describe("CLI", () => {
     const payload = JSON.parse(buffered.getOut());
     expect(Array.isArray(payload.diff.changes)).toBe(true);
     expect(payload.diff.changes.length).toBeGreaterThan(0);
+  });
+
+  it("supports diff with --format markdown", async () => {
+    const buffered = createBufferedIO();
+    const code = await runCli(
+      [
+        "node",
+        "sqlite-plan-diff",
+        "diff",
+        fixtureDb,
+        "--before",
+        "select * from users where name = 'Alice'",
+        "--after",
+        "select * from users where email = 'alice@example.com'",
+        "--format",
+        "markdown"
+      ],
+      buffered.io
+    );
+
+    expect(code).toBe(0);
+    expect(buffered.getErr()).toBe("");
+    expect(buffered.getOut()).toContain("## Semantic Diff");
+    expect(buffered.getOut()).toContain("[scan_to_search]");
+    expect(buffered.getOut()).toContain("## Before Plan");
+    expect(buffered.getOut()).toContain("## After Plan");
+  });
+
+  it("rejects conflicting --json and --format flags", async () => {
+    const buffered = createBufferedIO();
+    const code = await runCli(
+      [
+        "node",
+        "sqlite-plan-diff",
+        "diff",
+        fixtureDb,
+        "--before",
+        "select * from users where name = 'Alice'",
+        "--after",
+        "select * from users where email = 'alice@example.com'",
+        "--json",
+        "--format",
+        "markdown"
+      ],
+      buffered.io
+    );
+
+    expect(code).toBe(1);
+    expect(buffered.getOut()).toBe("");
+    expect(buffered.getErr()).toContain('Cannot combine --json with --format');
   });
 
   it("supports whatif without mutating the source database", async () => {

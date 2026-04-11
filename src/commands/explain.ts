@@ -1,10 +1,11 @@
 import { renderJson } from "../diff/renderJson";
+import { renderExplainMarkdown } from "../diff/renderMarkdown";
 import { renderNormalizedPlan, renderRawRows } from "../diff/renderTerminal";
 import { normalizePlan } from "../parser/normalizePlan";
 import { runExplainQueryPlan } from "../sqlite/eqp";
 import { connectSqlite } from "../sqlite/connect";
 import type { PlanWithRaw } from "../types";
-import { formatError, writeLine } from "./shared";
+import { formatError, resolveOutputFormat, writeLine } from "./shared";
 import type { CommandIO } from "./shared";
 
 export interface ExplainInput {
@@ -26,13 +27,20 @@ export function executeExplain(input: ExplainInput): PlanWithRaw {
 
 export interface ExplainCommandInput extends ExplainInput {
   json?: boolean;
+  format?: string;
 }
 
 export function runExplainCommand(input: ExplainCommandInput, io: CommandIO): number {
   try {
     const output = executeExplain(input);
-    if (input.json) {
+    const format = resolveOutputFormat(input);
+    if (format === "json") {
       writeLine(io.out, renderJson(output));
+      return 0;
+    }
+
+    if (format === "markdown") {
+      writeLine(io.out, renderExplainMarkdown(output));
       return 0;
     }
 

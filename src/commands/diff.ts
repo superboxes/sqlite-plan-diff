@@ -1,11 +1,12 @@
 import { renderJson } from "../diff/renderJson";
+import { renderComparisonMarkdown } from "../diff/renderMarkdown";
 import { renderNormalizedPlan, renderSemanticDiff } from "../diff/renderTerminal";
 import { semanticDiff } from "../diff/semanticDiff";
 import { normalizePlan } from "../parser/normalizePlan";
 import { connectSqlite } from "../sqlite/connect";
 import { runExplainQueryPlan } from "../sqlite/eqp";
 import type { PlanWithRaw, SemanticDiffResult } from "../types";
-import { formatError, writeLine } from "./shared";
+import { formatError, resolveOutputFormat, writeLine } from "./shared";
 import type { CommandIO } from "./shared";
 
 export interface DiffInput {
@@ -40,13 +41,20 @@ export function executeDiff(input: DiffInput): DiffOutput {
 
 export interface DiffCommandInput extends DiffInput {
   json?: boolean;
+  format?: string;
 }
 
 export function runDiffCommand(input: DiffCommandInput, io: CommandIO): number {
   try {
     const output = executeDiff(input);
-    if (input.json) {
+    const format = resolveOutputFormat(input);
+    if (format === "json") {
       writeLine(io.out, renderJson(output));
+      return 0;
+    }
+
+    if (format === "markdown") {
+      writeLine(io.out, renderComparisonMarkdown(output));
       return 0;
     }
 
