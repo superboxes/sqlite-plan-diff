@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { runCli } from "../src/cli";
@@ -24,6 +25,9 @@ function createBufferedIO(): {
 }
 
 const fixtureDb = resolve("test/fixtures/app.db");
+const packageJson = JSON.parse(readFileSync(resolve("package.json"), "utf8")) as {
+  version: string;
+};
 
 describe("CLI", () => {
   it("supports --version with a zero exit code", async () => {
@@ -32,7 +36,7 @@ describe("CLI", () => {
 
     expect(code).toBe(0);
     expect(buffered.getErr()).toBe("");
-    expect(buffered.getOut().trim()).toBe("0.1.2");
+    expect(buffered.getOut().trim()).toBe(packageJson.version);
   });
 
   it("supports explain with --format markdown", async () => {
